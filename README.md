@@ -34,5 +34,5 @@
 - 공식 API rate limit 때문에 로딩 UX를 더 세밀하게 다듬지 못함
 
 ## AI 활용 내용
-- OpenAI GPT-5 Codex (Cursor 통합)로 설계/리팩토링 아이디어와 코드 베이스 설명을 얻고, 일부 코드 초안을 작성했습니다.
+- Cursor로 설계/리팩토링 아이디어와 코드 베이스 설명을 얻고, 일부 코드 초안을 작성했습니다.
 - Tailwind 임의 값 문법, TanStack Virtual 사용법 등 문서 확인을 AI 보조 도구로 지원받았습니다.
