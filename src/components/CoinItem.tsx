@@ -15,7 +15,7 @@ type CoinItemProps = {
 };
 
 const rowColumnsClass =
-  'grid grid-cols-[80px_minmax(200px,1.3fr)_repeat(4,minmax(140px,1fr))] items-center';
+  'grid grid-cols-[240px_minmax(140px,180px)_repeat(3,minmax(140px,1fr))] items-center';
 
 export function CoinItem({ coin, isFavorite, onToggleFavorite, style }: CoinItemProps) {
   const priceChangePositive = (coin.price_change_percentage_24h ?? 0) >= 0;

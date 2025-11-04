@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import type { Coin, SortDirection, SortKey } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { CoinItem } from '@/components/CoinItem';
@@ -22,11 +22,11 @@ type CoinListProps = {
   onLoadMore?: () => void;
 };
 
-const sortOptions: { key: SortKey; label: string; align?: string }[] = [
-  { key: 'current_price', label: 'Price', align: 'justify-end' },
-  { key: 'price_change_percentage_24h', label: '24h Change', align: 'justify-end' },
-  { key: 'total_volume', label: '24h Volume', align: 'justify-end' },
-  { key: 'market_cap', label: 'Market Cap', align: 'justify-end' },
+const sortOptions: { key: SortKey; label: string }[] = [
+  { key: 'current_price', label: 'Price' },
+  { key: 'price_change_percentage_24h', label: '24h Change' },
+  { key: 'total_volume', label: '24h Volume' },
+  { key: 'market_cap', label: 'Market Cap' },
 ];
 
 const CLIENT_SORT_KEYS: SortKey[] = ['current_price', 'price_change_percentage_24h'];
@@ -122,15 +122,8 @@ export function CoinList({
   const displayCoins = shouldClientSort ? sortedCoins : filteredCoins;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
-
-  const windowVirtualizer = useWindowVirtualizer({
-    count: displayCoins.length,
-    estimateSize: () => 76,
-    overscan: 12,
-    scrollMargin,
-    getScrollElement: () => window,
-  });
 
   useEffect(() => {
     const updateScrollMargin = () => {
@@ -138,8 +131,7 @@ export function CoinList({
         return;
       }
 
-      const offset = containerRef.current.offsetTop;
-      setScrollMargin(offset);
+      setScrollMargin(containerRef.current.offsetTop);
     };
 
     updateScrollMargin();
@@ -150,22 +142,48 @@ export function CoinList({
     };
   }, []);
 
-  const virtualItems = windowVirtualizer.getVirtualItems();
-  const endIndex = virtualItems.length ? virtualItems[virtualItems.length - 1].index : -1;
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const rowVirtualizer = useVirtualizer({
+    count: displayCoins.length,
+    getScrollElement: () => document.documentElement,
+    estimateSize: () => 76,
+    overscan: 12,
+    scrollMargin,
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
 
   useEffect(() => {
     if (activeTab !== 'all') {
       return;
     }
 
-    if (!hasMore || !onLoadMore || isLoadingMore) {
+    const sentinel = loadMoreRef.current;
+
+    if (!sentinel || !hasMore || !onLoadMore) {
       return;
     }
 
-    if (endIndex >= displayCoins.length - 5) {
-      onLoadMore();
-    }
-  }, [activeTab, hasMore, onLoadMore, isLoadingMore, endIndex, displayCoins.length]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && !isLoadingMore) {
+          onLoadMore();
+        }
+      },
+      {
+        root: null,
+        rootMargin: '320px',
+        threshold: 0,
+      },
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [activeTab, hasMore, onLoadMore, isLoadingMore]);
 
   if (displayCoins.length === 0) {
     return (
@@ -180,7 +198,7 @@ export function CoinList({
   return (
     <div ref={containerRef} className="overflow-hidden rounded-3xl border border-white/5 bg-surface/80 shadow-glow">
       <div className="px-4 pb-4 pt-5">
-        <div className="grid grid-cols-[80px_minmax(200px,1.3fr)_repeat(4,minmax(140px,1fr))] items-center text-xs uppercase tracking-[0.2em] text-text-muted">
+        <div className="grid grid-cols-[240px_minmax(140px,180px)_repeat(3,minmax(140px,1fr))] items-center text-xs uppercase tracking-[0.2em] text-text-muted">
           <span className="font-medium">Name</span>
           {sortOptions.map((option) => {
             const isActive = option.key === sortKey;
@@ -211,9 +229,10 @@ export function CoinList({
           })}
         </div>
       </div>
-      <div style={{ height: windowVirtualizer.getTotalSize(), position: 'relative' }}>
+      <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
         {virtualItems.map((virtualRow) => {
           const coin = displayCoins[virtualRow.index];
+          const translateY = virtualRow.start - scrollMargin;
           return (
             <CoinItem
               key={coin.id}
@@ -226,7 +245,7 @@ export function CoinList({
                 left: 0,
                 width: '100%',
                 height: `${virtualRow.size}px`,
-                transform: `translateY(${virtualRow.start}px)`,
+                transform: `translateY(${translateY}px)`,
                 willChange: 'transform',
               }}
             />
@@ -235,7 +254,7 @@ export function CoinList({
       </div>
       {activeTab === 'all' ? (
         <div className="flex flex-col items-center justify-center py-4 text-sm text-text-muted">
-          {hasMore ? <span className="opacity-70">Scroll to load more</span> : <span>End of list</span>}
+          {hasMore ? <div ref={loadMoreRef} className="h-6" aria-hidden /> : <span>End of list</span>}
           {isLoadingMore && <span className="mt-2">Loading more...</span>}
         </div>
       ) : null}
