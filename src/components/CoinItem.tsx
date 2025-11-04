@@ -21,6 +21,8 @@ export function CoinItem({ coin, isFavorite, onToggleFavorite, style }: CoinItem
   const priceChangePositive = (coin.price_change_percentage_24h ?? 0) >= 0;
   const formattedPrice = formatPrice(coin.current_price ?? 0);
   const headlinePrice = formattedPrice.replace(/^[^\d-]+/, '');
+  const hasValidImage = typeof coin.image === 'string' && /^https?:\/\//.test(coin.image);
+  const fallbackInitials = formatSymbol(coin.symbol).slice(0, 2);
 
   return (
     <div
@@ -44,7 +46,13 @@ export function CoinItem({ coin, isFavorite, onToggleFavorite, style }: CoinItem
         </button>
         <div className="flex items-center gap-3">
           <div className="relative h-9 w-9 overflow-hidden rounded-full bg-muted">
-            <Image src={coin.image} alt={coin.name} fill sizes="36px" className="object-cover" />
+            {hasValidImage ? (
+              <Image src={coin.image} alt={coin.name} fill sizes="36px" className="object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-text">
+                {fallbackInitials}
+              </div>
+            )}
           </div>
           <div className="flex flex-col">
             <span className="font-medium text-text">{formatSymbol(coin.symbol)}</span>
