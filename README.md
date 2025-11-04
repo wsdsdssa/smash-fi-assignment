@@ -1,30 +1,38 @@
-이 프로젝트는 [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app)으로 초기화한 [Next.js](https://nextjs.org) 애플리케이션입니다.
+# Coin List Dashboard
 
-## 시작하기
+## 사용한 기술 스택
+- Next.js (App Router) & React 19
+- TypeScript
+- Tailwind CSS
+- Zustand + persist (즐겨찾기 상태 영속화)
+- @tanstack/react-query (서버 상태 관리)
+- @tanstack/react-virtual (가상 스크롤)
+- react-hot-toast (피드백 토스트)
+- ESLint, TypeScript, Tailwind PostCSS
 
-먼저 개발 서버를 실행하세요:
+## 프로젝트 실행 방법
+1. 저장소 클론 후 의존성 설치
+   ```bash
+   npm install
+   ```
+2. 개발 서버 실행
+   ```bash
+   npm run dev
+   ```
+3. 브라우저에서 [http://localhost:3000](http://localhost:3000) 접속
 
-```bash
-npm run dev
-```
+## 구현한 주요 요소
+- CoinGecko API를 활용한 실시간 코인 목록 조회 및 정렬 (가격, 24h 변동률, 거래량, 시가총액)
+- 즐겨찾기(Zustand + localStorage) 및 즐겨찾기 탭 분리, 토스트 피드백
+- 검색어/정렬 상태를 조합한 리스트 필터링
+- @tanstack/react-virtual을 이용한 가상 스크롤 + IntersectionObserver 기반 무한 스크롤
+- Tailwind 기반 다크 모드 UI, 반응형 레이아웃, Hover/Focus 인터랙션
 
-브라우저에서 [http://localhost:3000](http://localhost:3000)에 접속하면 결과를 확인할 수 있습니다.
+## 시간 내 구현하지 못한 부분 & 보완하고 싶은 점
+- CoinGecko 무료 API는 `price`, `24h change` 정렬을 서버 측에서 지원하지 않아 클라이언트 정렬로 보완 (완전한 정확도 한계)
+- Skeleton UI 미구현 및 로딩 상태가 매끄럽지 못함
+- 공식 API rate limit 때문에 로딩 UX를 더 세밀하게 다듬지 못함
 
-`app/page.tsx` 파일을 수정하면 페이지가 자동으로 갱신됩니다.
-
-이 프로젝트는 [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts)를 사용해 Vercel의 새로운 폰트 패밀리인 [Geist](https://vercel.com/font)를 최적화하여 불러옵니다.
-
-## 더 알아보기
-
-Next.js에 대해 더 자세히 알고 싶다면 아래 자료를 참고하세요.
-
-- [Next.js 문서](https://nextjs.org/docs): Next.js의 기능과 API를 소개합니다.
-- [Learn Next.js](https://nextjs.org/learn): 인터랙티브한 Next.js 튜토리얼입니다.
-
-[Next.js GitHub 저장소](https://github.com/vercel/next.js)도 확인해 보세요. 여러분의 피드백과 기여를 기다리고 있습니다!
-
-## Vercel로 배포하기
-
-Next.js 앱을 배포하는 가장 쉬운 방법은 Next.js 제작 팀이 제공하는 [Vercel 플랫폼](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)을 사용하는 것입니다.
-
-자세한 내용은 [Next.js 배포 문서](https://nextjs.org/docs/app/building-your-application/deploying)를 참고하세요.
+## AI 활용 내용
+- OpenAI GPT-5 Codex (Cursor 통합)로 설계/리팩토링 아이디어와 코드 베이스 설명을 얻고, 일부 코드 초안을 작성했습니다.
+- Tailwind 임의 값 문법, TanStack Virtual 사용법 등 문서 확인을 AI 보조 도구로 지원받았습니다.
