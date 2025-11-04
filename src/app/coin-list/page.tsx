@@ -26,7 +26,14 @@ export default function CoinListPage() {
   const [direction, setDirection] = useState<SortDirection>('desc');
 
   // 코인 데이터는 선택한 정렬 기준에 맞게 React Query로 불러온다.
-  const { data: coins, isLoading, isError } = useCoins(sortKey, direction, searchQuery);
+  const {
+    coins,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useCoins(sortKey, direction, searchQuery);
   const handleSortChange = (key: SortKey) => {
     if (sortKey === key) {
       setDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
@@ -103,7 +110,7 @@ export default function CoinListPage() {
         )}
 
         {/* 데이터가 정상적으로 로드되었을 때 리스트 렌더링 */}
-        {!isLoading && !isError && coins && (
+        {!isLoading && !isError && (
           <CoinList
             coins={coins}
             favoriteCoins={favoriteCoins}
@@ -114,6 +121,9 @@ export default function CoinListPage() {
             sortKey={sortKey}
             direction={direction}
             onSortChange={handleSortChange}
+            hasMore={activeTab === 'all' && hasNextPage}
+            isLoadingMore={isFetchingNextPage}
+            onLoadMore={activeTab === 'all' && hasNextPage ? fetchNextPage : undefined}
           />
         )}
       </section>
