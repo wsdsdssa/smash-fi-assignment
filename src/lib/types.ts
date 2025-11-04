@@ -4,10 +4,10 @@ export type Coin = {
   name: string;
   image: string;
   current_price: number;
-  price_change_percentage_24h: number;
-  total_volume: number;
-  market_cap: number;
-  market_cap_rank?: number;
+  price_change_percentage_24h: number | null;
+  total_volume: number | null;
+  market_cap: number | null;
+  market_cap_rank: number | null;
 };
 
 export type SortKey =
