@@ -8,7 +8,7 @@ import { CoinItem } from '@/components/CoinItem';
 
 type CoinListProps = {
   coins: Coin[];
-  favorites: string[];
+  favoriteCoins: Coin[];
   searchTerm: string;
   activeTab: 'all' | 'favorites';
   onToggleFavorite: (coin: Coin) => void;
@@ -29,7 +29,7 @@ const CLIENT_SORT_KEYS: SortKey[] = ['current_price', 'price_change_percentage_2
 
 export function CoinList({
   coins,
-  favorites,
+  favoriteCoins,
   searchTerm,
   activeTab,
   onToggleFavorite,
@@ -42,24 +42,49 @@ export function CoinList({
     onSortChange(key);
   };
 
+  const dataSource = useMemo(() => {
+    if (activeTab !== 'favorites') {
+      return coins;
+    }
+
+    const map = new Map<string, Coin>();
+
+    favoriteCoins.forEach((coin) => {
+      map.set(coin.id, coin);
+    });
+
+    coins.forEach((coin) => {
+      if (map.has(coin.id)) {
+        map.set(coin.id, { ...map.get(coin.id)!, ...coin });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [activeTab, coins, favoriteCoins]);
+
   const filteredCoins = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return coins.filter((coin) => {
+    return dataSource.filter((coin) => {
       const matchesSearch = normalizedSearch
         ? coin.name.toLowerCase().includes(normalizedSearch) ||
           coin.symbol.toLowerCase().includes(normalizedSearch)
         : true;
 
-      const matchesFavorites =
-        activeTab === 'favorites' ? favorites.includes(coin.id) : true;
-
-      return matchesSearch && matchesFavorites;
+      return matchesSearch;
     });
-  }, [coins, favorites, searchTerm, activeTab]);
+  }, [dataSource, searchTerm]);
+
+  const shouldClientSort = useMemo(() => {
+    if (activeTab === 'favorites') {
+      return true;
+    }
+
+    return CLIENT_SORT_KEYS.includes(sortKey);
+  }, [activeTab, sortKey]);
 
   const sortedCoins = useMemo(() => {
-    if (!CLIENT_SORT_KEYS.includes(sortKey)) {
+    if (!shouldClientSort) {
       return filteredCoins;
     }
 
@@ -75,9 +100,9 @@ export function CoinList({
 
       return 0;
     });
-  }, [filteredCoins, sortKey, direction]);
+  }, [filteredCoins, sortKey, direction, shouldClientSort]);
 
-  const displayCoins = CLIENT_SORT_KEYS.includes(sortKey) ? sortedCoins : filteredCoins;
+  const displayCoins = shouldClientSort ? sortedCoins : filteredCoins;
 
   if (displayCoins.length === 0) {
     return (

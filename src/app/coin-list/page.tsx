@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { CoinList } from '@/components/CoinList';
 import { SearchBar } from '@/components/SearchBar';
@@ -20,12 +20,13 @@ type TabId = (typeof tabs)[number]['id'];
 export default function CoinListPage() {
   // 현재 선택된 탭과 검색어 상태를 관리한다.
   const [activeTab, setActiveTab] = useState<TabId>('all');
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('current_price');
   const [direction, setDirection] = useState<SortDirection>('desc');
 
   // 코인 데이터는 선택한 정렬 기준에 맞게 React Query로 불러온다.
-  const { data: coins, isLoading, isError } = useCoins(sortKey, direction);
+  const { data: coins, isLoading, isError } = useCoins(sortKey, direction, searchQuery);
   const handleSortChange = (key: SortKey) => {
     if (sortKey === key) {
       setDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
@@ -37,18 +38,37 @@ export default function CoinListPage() {
 
   
   // 즐겨찾기 상태(Zustand)에서 필요한 값과 액션을 꺼내온다.
-  const favorites = useFavoriteStore((state) => state.favorites);
+  const favoriteIds = useFavoriteStore((state) => state.favoriteIds);
+  const favoriteMap = useFavoriteStore((state) => state.favorites);
   const addFavorite = useFavoriteStore((state) => state.addFavorite);
   const removeFavorite = useFavoriteStore((state) => state.removeFavorite);
   const isFavorite = useFavoriteStore((state) => state.isFavorite);
 
+  const favoriteCoins = useMemo(
+    () =>
+      favoriteIds
+        .map((id) => favoriteMap[id])
+        .filter((coin): coin is Coin => Boolean(coin)),
+    [favoriteIds, favoriteMap],
+  );
+
   // 즐겨찾기 토글 시 상태 업데이트와 토스트를 보여준다.
+  const handleSearch = () => {
+    setSearchQuery(searchInput.trim());
+  };
+
+  const handleTabChange = (tabId: TabId) => {
+    setActiveTab(tabId);
+    setSearchInput('');
+    setSearchQuery('');
+  };
+
   const handleToggleFavorite = (coin: Coin) => {
     if (isFavorite(coin.id)) {
       removeFavorite(coin.id);
       toast.success('Successfully deleted!');
     } else {
-      addFavorite(coin.id);
+      addFavorite(coin);
       toast.success('Successfully added!');
     }
   };
@@ -63,10 +83,10 @@ export default function CoinListPage() {
         </header>
 
         {/* 탭 전환 버튼 */}
-        <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <Tabs tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
 
         {/* 검색 입력 */}
-        <SearchBar value={search} onChange={setSearch} />
+        <SearchBar value={searchInput} onChange={setSearchInput} onSearch={handleSearch} />
 
         {/* 로딩 상태 표시 */}
         {isLoading && (
@@ -78,7 +98,7 @@ export default function CoinListPage() {
         {/* 에러 상태 표시 */}
         {isError && (
           <div className="flex h-[360px] items-center justify-center rounded-3xl border border-white/5 bg-surface/80 text-text-muted shadow-glow">
-            Failed to load coins 😢
+            Failed to load coins
           </div>
         )}
 
@@ -86,8 +106,8 @@ export default function CoinListPage() {
         {!isLoading && !isError && coins && (
           <CoinList
             coins={coins}
-            favorites={favorites}
-            searchTerm={search}
+            favoriteCoins={favoriteCoins}
+            searchTerm={searchQuery}
             activeTab={activeTab}
             onToggleFavorite={handleToggleFavorite}
             isFavorite={isFavorite}
