@@ -1,12 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
-import type { Coin, SortKey } from '@/lib/types';
+import type { Coin, SortDirection, SortKey } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { CoinItem } from '@/components/CoinItem';
-
-type SortDirection = 'asc' | 'desc';
 
 type CoinListProps = {
   coins: Coin[];
@@ -15,6 +13,9 @@ type CoinListProps = {
   activeTab: 'all' | 'favorites';
   onToggleFavorite: (coin: Coin) => void;
   isFavorite: (coinId: string) => boolean;
+  sortKey: SortKey;
+  direction: SortDirection;
+  onSortChange: (key: SortKey) => void;
 };
 
 const sortOptions: { key: SortKey; label: string; align?: string }[] = [
@@ -24,6 +25,8 @@ const sortOptions: { key: SortKey; label: string; align?: string }[] = [
   { key: 'market_cap', label: 'Market Cap', align: 'text-right' },
 ];
 
+const CLIENT_SORT_KEYS: SortKey[] = ['current_price', 'price_change_percentage_24h'];
+
 export function CoinList({
   coins,
   favorites,
@@ -31,17 +34,12 @@ export function CoinList({
   activeTab,
   onToggleFavorite,
   isFavorite,
+  sortKey,
+  direction,
+  onSortChange,
 }: CoinListProps) {
-  const [sortKey, setSortKey] = useState<SortKey>('current_price');
-  const [direction, setDirection] = useState<SortDirection>('desc');
-
   const handleSortChange = (key: SortKey) => {
-    if (sortKey === key) {
-      setDirection((prevDirection) => (prevDirection === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setDirection('desc');
-    }
+    onSortChange(key);
   };
 
   const filteredCoins = useMemo(() => {
@@ -61,6 +59,10 @@ export function CoinList({
   }, [coins, favorites, searchTerm, activeTab]);
 
   const sortedCoins = useMemo(() => {
+    if (!CLIENT_SORT_KEYS.includes(sortKey)) {
+      return filteredCoins;
+    }
+
     return [...filteredCoins].sort((a, b) => {
       const firstValue = a[sortKey] ?? 0;
       const secondValue = b[sortKey] ?? 0;
@@ -73,9 +75,11 @@ export function CoinList({
 
       return 0;
     });
-  }, [filteredCoins, direction, sortKey]);
+  }, [filteredCoins, sortKey, direction]);
 
-  if (sortedCoins.length === 0) {
+  const displayCoins = CLIENT_SORT_KEYS.includes(sortKey) ? sortedCoins : filteredCoins;
+
+  if (displayCoins.length === 0) {
     return (
       <div className="flex h-[360px] items-center justify-center rounded-3xl border border-white/5 bg-surface/80 text-center text-sm text-text-muted shadow-glow">
         {activeTab === 'favorites'
@@ -126,7 +130,7 @@ export function CoinList({
           </tr>
         </thead>
         <tbody>
-          {sortedCoins.map((coin) => (
+          {displayCoins.map((coin) => (
             <CoinItem
               key={coin.id}
               coin={coin}

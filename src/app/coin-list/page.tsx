@@ -4,17 +4,16 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { CoinList } from '@/components/CoinList';
 import { SearchBar } from '@/components/SearchBar';
-import { Tab } from '@/lib/types';
-import { useCoins } from '@/hooks/useCoins';
-import type { Coin } from '@/lib/types';
-import { useFavoriteStore } from '@/store/favoriteStore';
 import { Tabs } from '@/components/Tabs';
+import { useCoins } from '@/hooks/useCoins';
+import type { Coin, SortDirection, SortKey, Tab } from '@/lib/types';
+import { useFavoriteStore } from '@/store/favoriteStore';
 
 // 화면 상단 탭 정의 (All / My favorite)
-const tabs = [
+const tabs: Tab[] = [
   { id: 'all', label: 'All' },
   { id: 'favorites', label: 'My favorite' },
-] as Tab[];
+];
 
 type TabId = (typeof tabs)[number]['id'];
 
@@ -22,9 +21,20 @@ export default function CoinListPage() {
   // 현재 선택된 탭과 검색어 상태를 관리한다.
   const [activeTab, setActiveTab] = useState<TabId>('all');
   const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('current_price');
+  const [direction, setDirection] = useState<SortDirection>('desc');
 
-  // 코인 데이터는 React Query로 불러온다.
-  const { data: coins, isLoading, isError } = useCoins();
+  // 코인 데이터는 선택한 정렬 기준에 맞게 React Query로 불러온다.
+  const { data: coins, isLoading, isError } = useCoins(sortKey, direction);
+  const handleSortChange = (key: SortKey) => {
+    if (sortKey === key) {
+      setDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setDirection('desc');
+    }
+  };
+
   
   // 즐겨찾기 상태(Zustand)에서 필요한 값과 액션을 꺼내온다.
   const favorites = useFavoriteStore((state) => state.favorites);
@@ -53,7 +63,7 @@ export default function CoinListPage() {
         </header>
 
         {/* 탭 전환 버튼 */}
-        <Tabs tabs={tabs as Tab[]} activeTab={activeTab} onTabChange={setActiveTab} />
+        <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* 검색 입력 */}
         <SearchBar value={search} onChange={setSearch} />
@@ -81,6 +91,9 @@ export default function CoinListPage() {
             activeTab={activeTab}
             onToggleFavorite={handleToggleFavorite}
             isFavorite={isFavorite}
+            sortKey={sortKey}
+            direction={direction}
+            onSortChange={handleSortChange}
           />
         )}
       </section>

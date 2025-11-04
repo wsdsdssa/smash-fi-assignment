@@ -16,7 +16,9 @@ export type SortKey =
   | 'total_volume'
   | 'market_cap';
 
- export type Tab = {
-    id: string;
-    label: string;
-  };
+export type SortDirection = 'asc' | 'desc';
+
+export type Tab = {
+  id: string;
+  label: string;
+};
