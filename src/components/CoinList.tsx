@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { Coin, SortKey } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { CoinItem } from '@/components/CoinItem';
@@ -17,11 +17,11 @@ type CoinListProps = {
   isFavorite: (coinId: string) => boolean;
 };
 
-const sortOptions: { key: SortKey; label: string }[] = [
-  { key: 'current_price', label: 'Price' },
-  { key: 'price_change_percentage_24h', label: '24h Change' },
-  { key: 'total_volume', label: '24h Volume' },
-  { key: 'market_cap', label: 'Market Cap' },
+const sortOptions: { key: SortKey; label: string; align?: string }[] = [
+  { key: 'current_price', label: 'Price', align: 'text-right' },
+  { key: 'price_change_percentage_24h', label: '24h Change', align: 'text-right' },
+  { key: 'total_volume', label: '24h Volume', align: 'text-right' },
+  { key: 'market_cap', label: 'Market Cap', align: 'text-right' },
 ];
 
 export function CoinList({
@@ -36,15 +36,12 @@ export function CoinList({
   const [direction, setDirection] = useState<SortDirection>('desc');
 
   const handleSortChange = (key: SortKey) => {
-    setSortKey((currentKey) => {
-      if (currentKey !== key) {
-        setDirection('desc');
-        return key;
-      }
-
+    if (sortKey === key) {
       setDirection((prevDirection) => (prevDirection === 'asc' ? 'desc' : 'asc'));
-      return currentKey;
-    });
+    } else {
+      setSortKey(key);
+      setDirection('desc');
+    }
   };
 
   const filteredCoins = useMemo(() => {
@@ -65,14 +62,13 @@ export function CoinList({
 
   const sortedCoins = useMemo(() => {
     return [...filteredCoins].sort((a, b) => {
-      const first = direction === 'asc' ? a : b;
-      const second = direction === 'asc' ? b : a;
-
-      const firstValue = first[sortKey] ?? 0;
-      const secondValue = second[sortKey] ?? 0;
+      const firstValue = a[sortKey] ?? 0;
+      const secondValue = b[sortKey] ?? 0;
 
       if (typeof firstValue === 'number' && typeof secondValue === 'number') {
-        return firstValue - secondValue;
+        return direction === 'asc'
+          ? firstValue - secondValue
+          : secondValue - firstValue;
       }
 
       return 0;
@@ -94,17 +90,20 @@ export function CoinList({
       <table className="min-w-full border-separate border-spacing-y-1">
         <thead>
           <tr className="text-left text-xs uppercase tracking-[0.2em] text-text-muted">
-            <th className="px-4 pb-4 font-medium">&nbsp;</th>
             <th className="px-4 pb-4 font-medium">Name</th>
             {sortOptions.map((option) => {
               const isActive = option.key === sortKey;
               return (
-                <th key={option.key} className="px-4 pb-4 font-medium">
+                <th
+                  key={option.key}
+                  className={cn('px-4 pb-4 font-medium', option.align)}
+                >
                   <button
                     type="button"
                     onClick={() => handleSortChange(option.key)}
                     className={cn(
-                      'group inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-widest text-text-muted transition-colors hover:text-text',
+                      'cursor-pointer group inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium uppercase tracking-widest text-text-muted transition-colors hover:text-text',
+                      option.align === 'text-right' && 'ml-auto justify-end',
                       isActive && 'bg-white/5 text-text',
                     )}
                   >
@@ -112,12 +111,12 @@ export function CoinList({
                     <span className="text-text-muted">
                       {isActive ? (
                         direction === 'asc' ? (
-                          <ChevronUp className="size-4" />
+                          <ArrowUp className="size-4" />
                         ) : (
-                          <ChevronDown className="size-4" />
+                          <ArrowDown className="size-4" />
                         )
                       ) : (
-                        <ChevronDown className="size-4 opacity-30 transition-opacity group-hover:opacity-60" />
+                        <ArrowDown className="size-4 opacity-30 transition-opacity group-hover:opacity-60" />
                       )}
                     </span>
                   </button>
