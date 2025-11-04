@@ -4,16 +4,17 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { CoinList } from '@/components/CoinList';
 import { SearchBar } from '@/components/SearchBar';
-import { Tabs } from '@/components/Tabs';
+import { Tab } from '@/lib/types';
 import { useCoins } from '@/hooks/useCoins';
 import type { Coin } from '@/lib/types';
 import { useFavoriteStore } from '@/store/favoriteStore';
+import { Tabs } from '@/components/Tabs';
 
 // 화면 상단 탭 정의 (All / My favorite)
 const tabs = [
   { id: 'all', label: 'All' },
   { id: 'favorites', label: 'My favorite' },
-] as const;
+] as Tab[];
 
 type TabId = (typeof tabs)[number]['id'];
 
@@ -24,7 +25,7 @@ export default function CoinListPage() {
 
   // 코인 데이터는 React Query로 불러온다.
   const { data: coins, isLoading, isError } = useCoins();
-
+  
   // 즐겨찾기 상태(Zustand)에서 필요한 값과 액션을 꺼내온다.
   const favorites = useFavoriteStore((state) => state.favorites);
   const addFavorite = useFavoriteStore((state) => state.addFavorite);
@@ -52,7 +53,7 @@ export default function CoinListPage() {
         </header>
 
         {/* 탭 전환 버튼 */}
-        <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <Tabs tabs={tabs as Tab[]} activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* 검색 입력 */}
         <SearchBar value={search} onChange={setSearch} />

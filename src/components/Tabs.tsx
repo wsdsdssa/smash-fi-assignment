@@ -1,11 +1,8 @@
 'use client';
 
+import { Tab } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-type Tab = {
-  id: string;
-  label: string;
-};
 
 type TabsProps = {
   tabs: Tab[];
@@ -24,7 +21,7 @@ export function Tabs({ tabs, activeTab, onTabChange }: TabsProps) {
             type="button"
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              'relative pb-2 transition-colors hover:text-text',
+              'cursor-pointer relative pb-2 transition-colors hover:text-text',
               isActive && 'text-text',
             )}
           >
